@@ -1,7 +1,7 @@
 class ImageProcessor{
     public:
         //ratio will only accept the value as multiples of 30
-        ImageProcessor(int height, int width, int tpad, int sratio, int eratio, int rotation, int* rows, int row_size){
+        ImageProcessor(int height, int width, int tpad, int sratio, int eratio, int dpad, int* rows, int row_size){
             this->height = height;
             this->width = width;
             this->tpad = tpad;
@@ -9,10 +9,11 @@ class ImageProcessor{
             this->eratio = (eratio/30)*30%360;
             this->row_size = row_size;
             this->rows = rows;
-            this->calc_row_size = row_size-tpad;
-            this->rotation = (rotation/30)*30%360;
+            this->calc_row_size = row_size-tpad-dpad;
+            this->dpad = dpad;
             if(row_size > tpad)
-                calc_rows = new int[row_size-tpad];
+                calc_rows = new int[calc_row_size];
+
             calc_row();
             
             int pixel_sum=0;
@@ -25,10 +26,6 @@ class ImageProcessor{
         int calc_row();
         int mask(unsigned char *image);
         int rotate();
-        int set_rotation(int rotation){
-            this->rotation = (rotation/30)*30%360;
-            return 0;
-        }
         int set_tpad(int tpad){
             this->tpad = tpad;
             calc_row();
@@ -51,7 +48,7 @@ class ImageProcessor{
         int tpad;
         int sratio;
         int eratio;
-        int rotation;
+        int dpad;
         int row_size;
         int calc_row_size;
         int partial_buf_size;
