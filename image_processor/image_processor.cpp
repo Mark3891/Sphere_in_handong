@@ -3,10 +3,9 @@
 
 using namespace std;
 
-#define GET_RPOS(H, W, X, Y) (((Y)*(W)*3)+(X))
-#define GET_GPOS(H, W, X, Y) (((Y)*(W)*3)+(X)+1)
-#define GET_BPOS(H, W, X, Y) (((Y)*(W)*3)+(X)+2)
-
+#define GET_RPOS(H, W, X, Y) (((Y)*(W)*3) + ((X) * 3))
+#define GET_GPOS(H, W, X, Y) (((Y)*(W)*3) + ((X) * 3) + 1)
+#define GET_BPOS(H, W, X, Y) (((Y)*(W)*3) + ((X) * 3) + 2)
 /*
 class ImageProcessor{
     public:
@@ -83,9 +82,9 @@ int ImageProcessor::mask(unsigned char *image){
         */
 
         for(int j = 0; j < calc_rows[i]; j++){
-            long long rsum = 0;
-            long long gsum = 0;
-            long long bsum = 0;
+            unsigned long long rsum = 0;
+            unsigned long long gsum = 0;
+            unsigned long long bsum = 0;
             int mask_size = mask_height * mask_width;
             for(int xmask = 0; xmask < mask_width; xmask++){
                 for(int ymask = 0; ymask < mask_height; ymask++){
@@ -95,9 +94,10 @@ int ImageProcessor::mask(unsigned char *image){
                     bsum += image[GET_BPOS(height, width, j*mask_width+xmask, i*mask_height+ymask)];
                 }
             }
-            partial_buf[idx] = bsum/mask_size;
-            partial_buf[idx+1] = gsum/mask_size;
-            partial_buf[idx+2] = rsum/mask_size;
+            cout << (unsigned int)(bsum/mask_size) << " ";
+            partial_buf[idx] = (unsigned char)(bsum/mask_size);
+            partial_buf[idx+1] = (unsigned char)(gsum/mask_size);
+            partial_buf[idx+2] = (unsigned char)(rsum/mask_size);
             idx+=3;
         }
     }
@@ -117,26 +117,34 @@ int ImageProcessor::rotate(){
     int h = 0;
     if(!processed_image) return 1;
 
+    cout << processed_image_size << " " << sratio << endl;
     memset(processed_image, 0, processed_image_size);
     while(idx < processed_image_size){
-        cout << h << endl;
         if(h >= tpad+calc_row_size){
             break;
         }
         if(h < tpad){
-            idx+=rows[h];
+            idx+=rows[h]*3;
             h++;
             continue;
         }
-        int lpad = (sratio/360.0)*rows[h];
-        memcpy(processed_image+(idx+lpad), p_partial_buf, min(rows[h]-lpad, calc_rows[h-tpad]));
-        cout << rows[h]-lpad << "," << calc_rows[h-tpad] << endl;
-        if(rows[h]-lpad < calc_rows[h-tpad]){
-            memcpy(processed_image+idx, p_partial_buf+(rows[h]-lpad+1), calc_rows[h-tpad]-(rows[h]-lpad));
+        int lpad = (sratio/360.0)*rows[h]*3;
+        int row_ch= rows[h]*3;
+        int calc_row_ch = calc_rows[h-tpad]*3;
+        memcpy(processed_image+(idx+lpad), p_partial_buf, min(row_ch-lpad, calc_row_ch));
+        cout << lpad << "," << row_ch << "," << calc_row_ch << endl;
+        if(row_ch-lpad < calc_row_ch){
+            memcpy(processed_image+idx, p_partial_buf+(row_ch-lpad+1), calc_row_ch-(row_ch-lpad));
         }
-        cout << "2" << endl;
-        p_partial_buf+=calc_rows[h-tpad];
-        idx+=calc_rows[h-tpad];
+
+        if(h == 15){
+            for(int i = 0; i < row_ch; i++){
+                cout << (int)(processed_image+idx)[i] << " ";
+            }
+            cout << endl;
+        }
+        p_partial_buf+=calc_row_ch;
+        idx+=row_ch;
         h++;
     }
     return 0;

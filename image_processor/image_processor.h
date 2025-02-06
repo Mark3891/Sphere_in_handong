@@ -20,8 +20,8 @@ class ImageProcessor{
             for(int i = 0; i < row_size; i++){
                 pixel_sum+=rows[i];
             }
-            processed_image = new unsigned char[pixel_sum];
-            this->processed_image_size = pixel_sum;
+            processed_image = new unsigned char[pixel_sum*3];
+            this->processed_image_size = pixel_sum*3;
         }
         int calc_row();
         int mask(unsigned char *image);
@@ -37,7 +37,6 @@ class ImageProcessor{
         unsigned char *image;
         ~ImageProcessor(){
             delete[] calc_rows;
-            delete[] rows;
             delete[] partial_buf;
             delete[] processed_image;
         }
@@ -53,9 +52,9 @@ class ImageProcessor{
         int calc_row_size;
         int partial_buf_size;
         int processed_image_size;
-        int *calc_rows;
-        int *rows;
-        unsigned char *partial_buf;
-        unsigned char *processed_image;
+        int *calc_rows=nullptr;
+        int *rows=nullptr;
+        unsigned char *partial_buf=nullptr;
+        unsigned char *processed_image=nullptr;
 };
 

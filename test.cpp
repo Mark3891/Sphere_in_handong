@@ -51,16 +51,15 @@ int main() {
 
     const char * ip= "192.168.50.72";
 
-    ImageProcessor * image = new ImageProcessor(HEIGHT, WIDTH, 10, 0, 180, 0, rows, 54);
+    ImageProcessor * image = new ImageProcessor(HEIGHT, WIDTH, 0, 90, 270, 0, rows, 54);
     E131Sender * sender = new E131Sender(ip);
 
     image->mask(data);
     image->rotate();
-
     for(;;){
         sender->send(image->get_processed_image(), 48771);
         sender->next();
-        usleep(1000000);
+        usleep(250000);
     }
     return 0;
 }
