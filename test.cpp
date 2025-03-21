@@ -1,66 +1,73 @@
-#include "packet_sender/e131_sender.h"
-#include "image_processor/image_processor.h"
-#include "packet_sender/sleep.h"
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <vector>
+#include <cstdlib>   // system() 사용
+#include <opencv2/opencv.hpp>
 
-#define WIDTH 525
-#define HEIGHT 675
-#define CHANNELS 3
+using namespace std;
 
-int main() {
-    unsigned char data[WIDTH * HEIGHT * CHANNELS];
-    std::ifstream file("go.txt2", std::ios_base::in); // 파일 이름을 적절히 변경하세요
-
-    if (!file) {
-        std::cerr << "파일을 열 수 없습니다." << std::endl;
-        return 1;
+string getYouTubeStreamURL(const string& youtube_url) {
+    string command = "yt-dlp -g " + youtube_url + " 2>/dev/null";  // 오류 출력을 숨김
+    FILE* pipe = popen(command.c_str(), "r");  // yt-dlp 실행 결과를 읽기 위한 파이프
+    if (!pipe) {
+        cerr << "❌ Error: Failed to run yt-dlp." << endl;
+        return "";
     }
 
-    std::string line;
-    int index = 0;
+    char buffer[1024];
+    string result;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;  // 결과를 문자열로 저장
+    }
+    pclose(pipe);
 
-    while (std::getline(file, line)) {
-        // UTF-8 BOM 제거
-        if (index == 0 && line.size() >= 3 && (unsigned char)line[0] == 0xEF && (unsigned char)line[1] == 0xBB && (unsigned char)line[2] == 0xBF) {
-            line = line.substr(3);
-        }
-        
-        std::stringstream ss(line);
-        int value;
-        while (ss >> value) {
-            if (index >= WIDTH * HEIGHT * CHANNELS) {
-                std::cerr << "파일 데이터가 예상보다 많습니다." << std::endl;
-                return 1;
-            }
-            data[index++] = static_cast<unsigned char>(value);
-        }
+    // 개행 문자 제거 (출력값이 여러 줄일 경우 첫 번째 줄만 사용)
+    size_t pos = result.find('\n');
+    if (pos != string::npos) {
+        result = result.substr(0, pos);
     }
 
-
-    if (index < WIDTH * HEIGHT * CHANNELS) {
-        std::cerr << "파일 데이터가 부족합니다. 읽은 개수: " << index << std::endl;
-        return 1;
-    }
-    int rows[54]={
-        104,126,141,157,172,187,199,211,224,235,246,255,263,272,279,286,293,299,306,311,316,320,326,331,335,337,342,345,347,351,353,355,357,356,358,359,359,359,359,358,358,356,355,353,351,348,345,342,338,334,330,325,319,314
-    };
-
-    const char * ip= "192.168.50.72";
-
-    ImageProcessor * image = new ImageProcessor(HEIGHT, WIDTH, 0, 90, 270, 0, rows, 54);
-    E131Sender * sender = new E131Sender(ip);
-
-    image->mask(data);
-    image->rotate();
-    for(;;){
-        sender->send(image->get_processed_image(), 48771);
-        sender->next();
-        usleep(250000);
-    }
-    return 0;
+    return result;
 }
 
+int main(int argc, char* argv[]) {
+    if (argc < 3 || string(argv[1]) != "-url") {
+        cerr << "❌ Usage: " << argv[0] << " -url <YouTube URL>" << endl;
+        return -1;
+    }
+
+    string youtube_url = argv[2];
+    cout << "📡 Fetching stream URL for: " << youtube_url << endl;
+
+    // YouTube 영상의 직접 URL 가져오기
+    string stream_url = getYouTubeStreamURL(youtube_url);
+    if (stream_url.empty()) {
+        cerr << "❌ Error: Failed to get YouTube stream URL." << endl;
+        return -1;
+    }
+
+    cout << "✅ Stream URL: " << stream_url << endl;
+
+    // OpenCV로 YouTube 영상 스트리밍
+    cv::VideoCapture cap(stream_url);
+    if (!cap.isOpened()) {
+        cerr << "❌ Error: Could not open video stream." << endl;
+        return -1;
+    }
+
+    cv::Mat frame;
+    while (true) {
+        cap >> frame;
+        if (frame.empty()) break;
+
+        cv::imshow("YouTube Stream", frame);
+        if (cv::waitKey(30) == 27) break;  // ESC 키로 종료
+    }
+
+    cap.release();
+    cv::destroyAllWindows();
+
+    return 0;
+}

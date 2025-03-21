@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <e131.h>
 #include <string>
-#include "err.h"
+#include <err.h>
 #define E131_BUFFER_SIZE 512
 class E131Sender{
     public:

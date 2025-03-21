@@ -1,3 +1,5 @@
+#include<cstdint>
+
 class ImageProcessor{
     public:
         //ratio will only accept the value as multiples of 30
@@ -24,7 +26,8 @@ class ImageProcessor{
             this->processed_image_size = pixel_sum*3;
         }
         int calc_row();
-        int mask(unsigned char *image);
+        int mask(unsigned char * image);
+        int mask(uint32_t * image);
         int rotate();
         int set_tpad(int tpad){
             this->tpad = tpad;
