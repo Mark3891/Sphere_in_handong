@@ -10,7 +10,7 @@
 using namespace std;
 
 int main() {
-    std::string video_path = "videotest.mp4";
+    std::string video_path = "cry.MOV";
 
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
@@ -18,7 +18,7 @@ int main() {
         return -1;
     }
 
-    
+
     
     int rows[54] = {
         104, 126, 141, 157, 172, 187, 199, 211, 224, 235, 246, 255, 263, 272, 279, 286, 293, 299,
