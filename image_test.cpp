@@ -10,16 +10,14 @@
 using namespace std;
 
 int main() {
-    std::string video_path = "videotest.mp4";
+    std::string image_path = "line_test.png"; 
 
-    cv::VideoCapture cap(video_path);
-    if (!cap.isOpened()) {
-        std::cerr << "Error: Could not open video file." << std::endl;
+    cv::Mat frame = cv::imread(image_path);
+    if (frame.empty()) {
+        std::cerr << "Error: Could not open image file." << std::endl;
         return -1;
     }
 
-    
-    
     int rows[54] = {
         104, 126, 141, 157, 172, 187, 199, 211, 224, 235, 246, 255, 263, 272, 279, 286, 293, 299,
         306, 311, 316, 320, 326, 331, 335, 337, 342, 345, 347, 351, 353, 355, 357, 356, 358, 359,
@@ -27,24 +25,12 @@ int main() {
     };
 
     const char *ip = "192.168.50.72"; 
-    cv::Mat frame, frame_rgb;
-
-    cap >> frame;
-    if (frame.empty()) {
-        std::cerr << "Error: Failed to read the first frame." << std::endl;
-        return -1;
-    }
-
-    
     ImageProcessor *image = new ImageProcessor(frame.rows, frame.cols, 5, 90, 270, 0, rows, 54);
     E131Sender *sender = new E131Sender(ip);
 
     while (true) {
-        cap >> frame;
-        if (frame.empty()) break;
-
-        // BGR → RGB 변환
-        // cv::cvtColor(frame, frame_rgb, cv::COLOR_BGR2RGB);
+        // BGR → RGB 변환 (필요하면 활성화)
+        // cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
 
         // OpenCV 프레임 데이터를 unsigned char* 형식으로 가져오기
         unsigned char *rgb_data = frame.data;
@@ -58,12 +44,12 @@ int main() {
         sender->next();
         
         // OpenCV 화면 출력
-        cv::imshow("Local Video Stream", frame);
+        cv::imshow("Static Image Display", frame);
 
-       
-        if (cv::waitKey(30) == 27) break;
+        // ESC 키(27) 누르면 종료
+        if (cv::waitKey(100) == 27) break;
     }
-    cap.release();
+
     cv::destroyAllWindows();
     delete image;
     delete sender;
